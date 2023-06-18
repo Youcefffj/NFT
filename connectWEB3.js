@@ -2,7 +2,7 @@
 const Web3 = require('web3');
 
 // Configurer le fournisseur Web3.js
-const providerUrl = 'https://goerli.infura.io/v3/VOTRE_CLE_INFURA';
+const providerUrl = 'https://goerli.infura.io/v3/9f3ca99490434d35982f8f572e594fc9';
 const web3 = new Web3(new Web3.providers.HttpProvider(providerUrl));
 
 // Charger le contrat NFT (exemple basé sur le contrat ERC721)
