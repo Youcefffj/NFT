@@ -1,0 +1,8 @@
+On a un script qui va servir à trouver automatiquement qui est le propriétaire d’un dossier partagé.
+Pour chaque dossier, il regarde qui utilise le plus le dossier. Il analyse les logs d’accès sur 60 jours. S’il n’y a pas assez d’infos, il élargit à 180, voire 365 jours. 
+Si cette méthode ne donne pas de résultat concret (pas assez d’infos), on regarde qui a des permissions sur le dossier. On peut souvent identifier une personne ou un groupe clairement lié au dossier.
+Si on n’a toujours pas de résultats utilisables, on remonte au dossier parent pour voir s’il y a des infos utiles.
+Une fois qu’on a un bon candidat, on met à jour la base avec cette personne comme propriétaire. Si jamais le doute est trop grand, il laisse le dossier en “à review”.
+Dans le cas où un dossier n’existe plus, ou s’il y a un problème de connexion, le script logue l’erreur, et passe au dossier suivant.
+
+
