@@ -1,14 +1,11 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import argparse
 import csv
 import re
 import sys
 from collections import defaultdict
 from pathlib import Path
 
-# Tags à suivre
 TAGS_CIBLES = {
     "MIP_CONF_INTRA",
     "MIP_CONF_INTRA_EXTRA",
@@ -18,14 +15,10 @@ TAGS_CIBLES = {
     "MIP_SEC_EXTRA",
 }
 
-# Expression régulière : extrait le tag et le n avant le /
-# ex. "MIP_CONF_INTRA_EXTRA (5/5)"  →  ("MIP_CONF_INTRA_EXTRA", "5")
 PATTERN = re.compile(r"\b(MIP_[A-Z_]+)\s*\(\s*(\d+)\s*/")
+DOSSIER_SCRIPT = Path(__file__).parent
 
 def compter_dans_fichier(fichier: Path, compte_global: defaultdict):
-    """
-    Parcourt un fichier CSV ligne par ligne et met à jour compte_global.
-    """
     try:
         with fichier.open(newline="", encoding="utf-8-sig") as f:
             lecteur = csv.reader(f)
@@ -55,26 +48,27 @@ def compter_dans_fichier(fichier: Path, compte_global: defaultdict):
                         compte_global[tag] += int(n)
 
     except UnicodeDecodeError:
-        print(f"Erreur d’encodage dans le fichier {fichier}", file=sys.stderr)
+        print(f"Erreur d'encodage dans le fichier {fichier}", file=sys.stderr)
     except FileNotFoundError:
         print(f"Fichier introuvable : {fichier}", file=sys.stderr)
 
+
+
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Compte les occurrences n des tags MIP_… dans des CSV."
-    )
-    parser.add_argument(
-        "csv_files",
-        nargs="+",
-        type=Path,
-        help="Chemins vers les fichiers CSV à analyser",
-    )
-    args = parser.parse_args()
+    # Nom du fichier CSV à traiter — à modifier selon vos besoins
+    CSV_UNIQUE = DOSSIER_SCRIPT / "fichier1.csv"
+
+    if not CSV_UNIQUE.exists():
+        print(f"Fichier introuvable : {CSV_UNIQUE}")
+        return
+
+    csv_files = [CSV_UNIQUE]
 
     # Dictionnaire compteur (valeur par défaut 0)
     compte_global = defaultdict(int)
 
-    for fichier in args.csv_files:
+    for fichier in csv_files:
         compter_dans_fichier(fichier, compte_global)
 
     if not compte_global:
