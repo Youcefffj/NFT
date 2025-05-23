@@ -1,1 +1,90 @@
 
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import argparse
+import csv
+import re
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+# Tags à suivre
+TAGS_CIBLES = {
+    "MIP_CONF_INTRA",
+    "MIP_CONF_INTRA_EXTRA",
+    "MIP_CONF_EXTRA",
+    "MIP_SEC_INTRA",
+    "MIP_SEC_INTRA_EXTRA",
+    "MIP_SEC_EXTRA",
+}
+
+# Expression régulière : extrait le tag et le n avant le /
+# ex. "MIP_CONF_INTRA_EXTRA (5/5)"  →  ("MIP_CONF_INTRA_EXTRA", "5")
+PATTERN = re.compile(r"\b(MIP_[A-Z_]+)\s*\(\s*(\d+)\s*/")
+
+def compter_dans_fichier(fichier: Path, compte_global: defaultdict):
+    """
+    Parcourt un fichier CSV ligne par ligne et met à jour compte_global.
+    """
+    try:
+        with fichier.open(newline="", encoding="utf-8-sig") as f:
+            lecteur = csv.reader(f)
+            en_tete = next(lecteur, None)
+            if en_tete is None:
+                print(f"Avertissement : {fichier} est vide.", file=sys.stderr)
+                return
+
+            # Recherche de la colonne cible
+            try:
+                idx_col = en_tete.index("Classification Results (Selected Rules)")
+            except ValueError:
+                print(
+                    f"Avertissement : colonne manquante dans {fichier}.",
+                    file=sys.stderr,
+                )
+                return
+
+            # Lecture ligne à ligne pour limiter la mémoire
+            for ligne in lecteur:
+                if idx_col >= len(ligne):
+                    # Ligne incomplète
+                    continue
+                cell = ligne[idx_col]
+                for tag, n in PATTERN.findall(cell):
+                    if tag in TAGS_CIBLES:
+                        compte_global[tag] += int(n)
+
+    except UnicodeDecodeError:
+        print(f"Erreur d’encodage dans le fichier {fichier}", file=sys.stderr)
+    except FileNotFoundError:
+        print(f"Fichier introuvable : {fichier}", file=sys.stderr)
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Compte les occurrences n des tags MIP_… dans des CSV."
+    )
+    parser.add_argument(
+        "csv_files",
+        nargs="+",
+        type=Path,
+        help="Chemins vers les fichiers CSV à analyser",
+    )
+    args = parser.parse_args()
+
+    # Dictionnaire compteur (valeur par défaut 0)
+    compte_global = defaultdict(int)
+
+    for fichier in args.csv_files:
+        compter_dans_fichier(fichier, compte_global)
+
+    if not compte_global:
+        print("Aucun tag pertinent trouvé.")
+        return
+
+    # Affichage propre
+    print("\nRésultats :")
+    for tag in sorted(TAGS_CIBLES):
+        print(f"{tag:22s} : {compte_global[tag]}")
+
+if __name__ == "__main__":
+    main()
